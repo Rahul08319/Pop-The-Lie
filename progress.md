@@ -12,4 +12,4 @@ Original prompt: Continue implementing the canvas-based Pop the Lie game, verify
 
 - Run the bundled Playwright game-action client and visually inspect its gameplay screenshot when the `playwright` dependency/runtime is available. The package is not installed, npm registry access is blocked in this environment, and the official game-test page cannot substitute for local interactive gameplay testing.
 - Run Google's official Playables Test Suite with the uploaded/hosted game package and an authenticated Playables account; local tests cannot certify the game.
-- Push the latest local changes to GitHub; do not include `.playwright-cli/` artifacts.
+- Commit `49c9911` is pushed to the repository's `main` branch. Do not include `.playwright-cli/` artifacts in later commits.
