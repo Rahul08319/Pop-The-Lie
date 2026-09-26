@@ -4,6 +4,9 @@ let audioCtx: AudioContext | null = null;
 let systemAudioEnabled = true;
 export function setSystemAudioEnabled(enabled: boolean) {
   systemAudioEnabled = enabled;
+  if (musicGain && audioCtx) {
+    musicGain.gain.setValueAtTime(enabled && !musicMuted ? 0.06 : 0, audioCtx.currentTime);
+  }
 }
 
 
@@ -155,7 +158,7 @@ export function startBackgroundMusic() {
   try {
     const ctx = getAudioContext();
     musicGain = ctx.createGain();
-    musicGain.gain.setValueAtTime(musicMuted ? 0 : 0.06, ctx.currentTime);
+    musicGain.gain.setValueAtTime(musicMuted || !systemAudioEnabled ? 0 : 0.06, ctx.currentTime);
     musicGain.connect(ctx.destination);
 
     let noteIndex = 0;
@@ -211,7 +214,7 @@ export function toggleMusicMute(): boolean {
   localStorage.setItem('popTheLie_musicMuted', String(musicMuted));
   if (musicGain) {
     const ctx = getAudioContext();
-    musicGain.gain.setValueAtTime(musicMuted ? 0 : 0.06, ctx.currentTime);
+    musicGain.gain.setValueAtTime(musicMuted || !systemAudioEnabled ? 0 : 0.06, ctx.currentTime);
   }
   return musicMuted;
 }

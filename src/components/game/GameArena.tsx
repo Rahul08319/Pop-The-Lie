@@ -44,6 +44,7 @@ export function GameArena() {
   const [showDailyLeaderboard, setShowDailyLeaderboard] = useState(false);
   const [showNameInput, setShowNameInput] = useState(false);
   const [submittingDaily, setSubmittingDaily] = useState(false);
+  const [keyboardAnnouncement, setKeyboardAnnouncement] = useState('');
 
   const award = (ids: AchievementId[]) => {
     const newlyUnlocked = unlockAchievements(ids);
@@ -83,6 +84,8 @@ export function GameArena() {
       setGameState(prev => ({ ...prev, lives: lv }));
     };
 
+    engine.onKeyboardSelection = (equation) => setKeyboardAnnouncement(equation ? `Selected equation ${equation}. Press Enter or Space to pop.` : '');
+
     engine.run();
 
     return () => {
@@ -110,6 +113,18 @@ export function GameArena() {
     window.advanceTime = (ms) => engineRef.current?.advanceTime(ms);
     return () => { delete window.render_game_to_text; delete window.advanceTime; };
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'f' && engineState === 'playing') {
+        if (document.fullscreenElement) void document.exitFullscreen();
+        else void document.documentElement.requestFullscreen?.().catch(() => undefined);
+      }
+      if (event.key === 'Escape' && document.fullscreenElement) void document.exitFullscreen();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [engineState]);
 
   const handleStartGame = (diff: Difficulty, mode: 'classic' | 'daily' = 'classic') => {
     const config = DIFFICULTY_CONFIGS[diff];
@@ -158,6 +173,7 @@ export function GameArena() {
         tabIndex={0}
         aria-label="Pop the Lie game canvas. Tap or click false equations."
       />
+      <div className="sr-only" aria-live="polite" aria-atomic="true">{keyboardAnnouncement}</div>
 
       {/* In-Game HUD: Score, Lives, Combo Flame, Pause */}
       {engineState === 'playing' && (

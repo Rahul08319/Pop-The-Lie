@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { platformManager } from '@/platforms/platformManager';
 import { PlayablesSaveData } from './types';
+import { setSystemAudioEnabled } from './audioManager';
 
 export type { PlayablesSaveData } from './types';
 
@@ -46,6 +47,14 @@ export function useYouTubePlayables(options: Options): void {
     const init = async () => {
       try {
         await adapter.init();
+
+        setSystemAudioEnabled(adapter.isAudioEnabled());
+        cleanups.push(adapter.onAudioEnabledChange(setSystemAudioEnabled));
+        const language = await adapter.getLanguage();
+        if (language) {
+          document.documentElement.lang = language;
+          window.dispatchEvent(new CustomEvent('popTheLie:locale-ready'));
+        }
 
         // Signal first frame rendered to YouTube
         requestAnimationFrame(() => {

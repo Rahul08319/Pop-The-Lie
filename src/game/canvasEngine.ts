@@ -124,6 +124,7 @@ export class GameEngine2D {
   public mode: GameMode = 'classic';
   public state: 'MENU' | 'PLAYING' | 'GAMEOVER' = 'MENU';
   public canRevive: boolean = true;
+  public keyboardTargetId: string | null = null;
 
   // Power ups
   public freezeUntil: number = 0;
@@ -134,6 +135,7 @@ export class GameEngine2D {
   public onScoreUpdate?: (score: number, highScore: number, level: number, combo: number) => void;
   public onLivesUpdate?: (lives: number) => void;
   public onGameOver?: (finalScore: number, isNewHigh: boolean) => void;
+  public onKeyboardSelection?: (equation: string) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -143,8 +145,6 @@ export class GameEngine2D {
     this.resize();
     this.bindEvents();
 
-    // Signal firstFrameReady to platform SDK
-    platformManager.getAdapter().firstFrameReady();
   }
 
   private initStars() {
@@ -177,6 +177,7 @@ export class GameEngine2D {
 
     const onPointerDown = (e: PointerEvent) => {
       e.preventDefault();
+      this.canvas.focus({ preventScroll: true });
       isPointerDown = true;
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -206,6 +207,27 @@ export class GameEngine2D {
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
+
+    this.canvas.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        const active = this.balloons.filter(balloon => !balloon.popped).sort((a, b) => a.x - b.x);
+        if (!active.length) return;
+        const current = active.findIndex(balloon => balloon.id === this.keyboardTargetId);
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        const nextIndex = current < 0 ? (direction > 0 ? 0 : active.length - 1) : (current + direction + active.length) % active.length;
+        const next = active[nextIndex];
+        this.keyboardTargetId = next.id;
+        this.onKeyboardSelection?.(next.equation.display);
+        this.render();
+      } else if ((event.key === 'Enter' || event.key === ' ') && this.keyboardTargetId) {
+        event.preventDefault();
+        const target = this.balloons.find(balloon => balloon.id === this.keyboardTargetId && !balloon.popped);
+        if (target) this.checkPopAt(target.x, target.y);
+        this.keyboardTargetId = null;
+        this.onKeyboardSelection?.('');
+      }
+    });
 
     window.addEventListener('resize', () => this.resize());
   }
@@ -239,6 +261,7 @@ export class GameEngine2D {
     this.freezeUntil = 0;
     this.doubleUntil = 0;
     this.balloons = [];
+    this.keyboardTargetId = null;
     this.particles = [];
     this.shockwaves = [];
     this.scorePopups = [];
@@ -684,6 +707,16 @@ export class GameEngine2D {
     const isFrozen = now < this.freezeUntil;
     for (const b of this.balloons) {
       this.drawBalloon(ctx, b, isFrozen);
+      if (b.id === this.keyboardTargetId && !b.popped) {
+        ctx.save();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, b.radiusX + 11, b.radiusY + 11, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // 4. Shockwaves

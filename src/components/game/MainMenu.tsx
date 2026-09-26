@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Difficulty, DIFFICULTY_CONFIGS } from '@/game/types';
 import { playButtonClick, toggleMusicMute, isMusicMuted } from '@/game/audioManager';
 import { PlatformSelectorModal } from './PlatformSelectorModal';
@@ -31,6 +31,12 @@ export function MainMenu({
   const [showAchievements, setShowAchievements] = useState(false);
   const text = strings(language);
   const unlocked = getUnlockedAchievements();
+
+  useEffect(() => {
+    const syncHostLanguage = () => setLanguage(getGameLanguage());
+    window.addEventListener('popTheLie:locale-ready', syncHostLanguage);
+    return () => window.removeEventListener('popTheLie:locale-ready', syncHostLanguage);
+  }, []);
 
   const handleMuteToggle = () => {
     playButtonClick();
@@ -107,6 +113,7 @@ export function MainMenu({
           <p className="font-arcade text-xs sm:text-sm text-sky-200/90 drop-shadow">
             {text.popLie}
           </p>
+          <p className="text-[10px] text-white/55" aria-label="Keyboard controls">← / → select · Enter / Space pop · F fullscreen</p>
         </div>
 
         {/* Game Mode Switcher: Arcade Endless vs Daily Challenge */}
