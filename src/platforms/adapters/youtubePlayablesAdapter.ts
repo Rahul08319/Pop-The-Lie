@@ -20,10 +20,6 @@ export interface YouTubePlayablesSdk {
     onPause(callback: () => void): () => void;
     onResume(callback: () => void): () => void;
   };
-  ads?: {
-    requestInterstitialAd(): Promise<void>;
-    requestRewardedAd(rewardId: string): Promise<boolean>;
-  };
   engagement?: {
     sendScore(score: { value: number }): Promise<void>;
     openYTContent(content: { id: string; contentType?: 'VIDEO' | 'PLAYABLE' }): Promise<void>;
@@ -47,8 +43,8 @@ export class YouTubePlayablesAdapter implements IPlatformAdapter {
   readonly name = 'YouTube Playables';
 
   readonly capabilities: PlatformCapabilities = {
-    hasAds: true,
-    hasRewardedAds: true,
+    hasAds: false,
+    hasRewardedAds: false,
     hasCloudSave: true,
     hasLeaderboards: true,
     hasAudioSync: true,
@@ -217,29 +213,12 @@ export class YouTubePlayablesAdapter implements IPlatformAdapter {
   }
 
   async showInterstitialAd(): Promise<void> {
-    try {
-      if (this.sdk?.ads?.requestInterstitialAd) {
-        await this.sdk.ads.requestInterstitialAd();
-      }
-    } catch (err) {
-      // Per YouTube guidelines: Handle ad errors gracefully and continue gameplay
-      this.logWarning(err);
-    }
+    // This playable deliberately has no monetization flow.
   }
 
-  async showRewardedAd(rewardId: string): Promise<boolean> {
-    try {
-      if (this.sdk?.ads?.requestRewardedAd) {
-        // Safe sanitization: IDs must be readable, no user data
-        const safeRewardId = rewardId.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 64);
-        return await this.sdk.ads.requestRewardedAd(safeRewardId);
-      }
-      // If running locally or ads unsupported, resolve true in development or mock
-      return true;
-    } catch (err) {
-      this.logWarning(err);
-      return false;
-    }
+  async showRewardedAd(_rewardId: string): Promise<boolean> {
+    // Keep the shared adapter contract, but never grant an ad-based reward.
+    return false;
   }
 
   async getLanguage(): Promise<string> {

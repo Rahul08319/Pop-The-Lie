@@ -204,8 +204,6 @@ export function GameArena() {
       {engineState === 'gameover' && !showNameInput && (
         <GameOverScreen
           gameState={gameState}
-          canRevive={false}
-          onRewardedRevive={async () => false}
           onRestart={(diff) => handleStartGame(diff, gameState.mode)}
           onShowLeaderboard={() => setShowLeaderboard(true)}
           onShowDailyLeaderboard={() => setShowDailyLeaderboard(true)}

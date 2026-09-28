@@ -22,10 +22,6 @@ describe('YouTubePlayablesAdapter & PlatformManager', () => {
         onPause: vi.fn().mockImplementation((cb) => () => {}),
         onResume: vi.fn().mockImplementation((cb) => () => {}),
       },
-      ads: {
-        requestInterstitialAd: vi.fn().mockResolvedValue(undefined),
-        requestRewardedAd: vi.fn().mockResolvedValue(true),
-      },
       engagement: {
         sendScore: vi.fn().mockResolvedValue(undefined),
         openYTContent: vi.fn().mockResolvedValue(undefined),
@@ -76,14 +72,13 @@ describe('YouTubePlayablesAdapter & PlatformManager', () => {
     expect(window.ytgame?.engagement?.sendScore).toHaveBeenCalledTimes(1);
   });
 
-  it('requests interstitial and rewarded ads with sanitized reward IDs', async () => {
+  it('does not enable ad or rewarded-ad capabilities', async () => {
     const adapter = new YouTubePlayablesAdapter();
+    expect(adapter.capabilities.hasAds).toBe(false);
+    expect(adapter.capabilities.hasRewardedAds).toBe(false);
     await adapter.showInterstitialAd();
-    expect(window.ytgame?.ads?.requestInterstitialAd).toHaveBeenCalled();
-
     const rewarded = await adapter.showRewardedAd('revive_life_123');
-    expect(rewarded).toBe(true);
-    expect(window.ytgame?.ads?.requestRewardedAd).toHaveBeenCalledWith('revive_life_123');
+    expect(rewarded).toBe(false);
   });
 
   it('PlatformManager contains all 13 platforms and switches active target', () => {

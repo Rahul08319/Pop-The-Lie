@@ -4,8 +4,6 @@ import { playButtonClick, playScoreTick } from '@/game/audioManager';
 
 interface GameOverProps {
   gameState: GameState;
-  canRevive?: boolean;
-  onRewardedRevive?: () => Promise<boolean>;
   onRestart: (difficulty: Difficulty) => void;
   onShowLeaderboard: () => void;
   onShowDailyLeaderboard: () => void;
@@ -15,8 +13,6 @@ interface GameOverProps {
 
 export function GameOverScreen({
   gameState,
-  canRevive,
-  onRewardedRevive,
   onRestart,
   onShowLeaderboard,
   onShowDailyLeaderboard,
@@ -26,7 +22,6 @@ export function GameOverScreen({
   const isNewHighScore = gameState.score >= gameState.highScore && gameState.score > 0;
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(gameState.difficulty);
   const [scoreSaved, setScoreSaved] = useState(false);
-  const [isWatchingAd, setIsWatchingAd] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
 
   const difficulties: Difficulty[] = ['easy', 'medium', 'hard'];
@@ -55,17 +50,6 @@ export function GameOverScreen({
 
     return () => clearInterval(interval);
   }, [gameState.score]);
-
-  const handleReviveClick = async () => {
-    if (!onRewardedRevive || isWatchingAd) return;
-    playButtonClick();
-    setIsWatchingAd(true);
-    try {
-      await onRewardedRevive();
-    } finally {
-      setIsWatchingAd(false);
-    }
-  };
 
   return (
     <div
@@ -118,26 +102,6 @@ export function GameOverScreen({
             </div>
           </div>
         </div>
-
-        {/* Rewarded Ad Revive Opportunity */}
-        {canRevive && onRewardedRevive && (
-          <button
-            onClick={handleReviveClick}
-            disabled={isWatchingAd}
-            className="w-full py-3.5 px-4 rounded-3xl bg-gradient-to-r from-emerald-600/30 via-teal-500/30 to-emerald-600/30 border-2 border-emerald-400/60 hover:border-emerald-300 text-white font-arcade text-xs flex items-center justify-between transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-2xl">❤️</span>
-              <div className="text-left">
-                <span className="block font-bold text-sm text-emerald-300 leading-tight">Continue with +1 Life!</span>
-                <span className="text-[10px] text-white/70">Watch 1 sponsored ad</span>
-              </div>
-            </div>
-            <span className="px-3 py-1.5 rounded-xl bg-emerald-400 text-black font-black text-xs">
-              {isWatchingAd ? 'Loading...' : 'REVIVE ▶'}
-            </span>
-          </button>
-        )}
 
         {/* Quick Difficulty Pills */}
         <div className="grid grid-cols-3 gap-2 w-full">
